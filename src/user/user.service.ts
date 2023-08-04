@@ -29,32 +29,24 @@ export class UserService {
     return updatedProfile;
   }
 
-
-  async verify(email) {
-    console.log(email, EmailAddress, EmailPassword)
-
-    this.transporter = createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: true,
-      // requireTLS: true,
-      auth: {
-        user: EmailAddress,
-        pass: EmailPassword,
-      },
-      logger: true
-    });
-
-    // send mail with defined transport object
-    const info = await this.transporter.sendMail({
-      from: EmailAddress,
-      to: "smiledev10162@gmail.com",
-      subject: "Hello from node",
-      text: "Hello world?",
-      // headers: { 'x-myheader': 'test header' }
-    });
-
-    console.log("Message sent: %s", info.response);
+  async changePassword(data: any): Promise<any> {
+    try {
+      const foundUser = await this.userModel.findOne({ _id: data.id }).exec();
+      if (foundUser) {
+          const { password } = foundUser;
+          let checkPassword = await bcrypt.compare(data.currentPassword, password);
+          if (checkPassword) {
+            const salt = await bcrypt.genSalt();
+            const hash = await bcrypt.hash(data.newPassword, salt);
+            const updatedProfile = await this.userModel.findByIdAndUpdate(data.id, {password: hash}, { new: true });
+            return updatedProfile;
+          }
+          return {error: 'Incorrect current password!!!'};
+      }
+      return {error: 'Incorrect current password222'};
+    } catch (error) {
+      return {error: 'something went wrong please try again later'};
+    }
   }
 
   async getOne(email): Promise<User> {
@@ -107,6 +99,17 @@ export class UserService {
           return this.Handler.erroresponse(HttpStatus.BAD_REQUEST, 'something went wrong please try again later');
       }
   }
+
+  async generateRandomNumber(min: number, max: number): Promise<number> {
+    // Generate a random decimal between 0 and 1
+    const randomDecimal = Math.random();
+  
+    // Scale the random decimal to the desired range
+    const randomNumber = await Math.floor(randomDecimal * (max - min + 1)) + min;
+  
+    return randomNumber;
+  }
+  
 
   // async editPost(postID, createPostDTO: CreateUserDTO): Promise<User> {
   //   const editedPost = await this.userModel

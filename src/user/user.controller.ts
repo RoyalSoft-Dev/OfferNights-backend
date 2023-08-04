@@ -13,19 +13,6 @@ export class UserController {
 
   constructor(private userService: UserService, private jwtService: JwtService, private Handler: Handler) { }
 
-  // Sign-up a user
-  @Post('/email-verify')
-  async emailVerify(@Res() response, @Body() email: string) {
-    try {
-      const token = await this.userService.verify(email);
-      let result = this.Handler.success(response, token);
-      return result
-    }
-    catch (error) {
-        return this.Handler.errorException(response, error);
-    }
-  }
-
   // Get current user
   @Get('get-user')
   async getCurrentUser(@Res() res, @Req() req) {
@@ -85,37 +72,22 @@ export class UserController {
     })
   }
 
-  // // Fetch all posts
-  // @Get('sign-in')
-  // async getPosts(@Res() res) {
-  //   console.log("sign-in")
-  //   const posts = await this.userService.getPosts();
-  //   return res.status(HttpStatus.OK).json(posts);
-  // }
+  // Sign-up a user
+  @UseGuards(AuthGuard)
+  @Put('/change-password/:id')
+  async changePassword(@Param('id') id: string, @Res() response, @Body() password: any) {
+    try {
+      const result = await this.userService.changePassword(password);
+      if (result && result.status && result.status.code === 1000) {
+        return response.status(200).json(result);
+      }
+      return response.status(401).json(result);
+    }
+    catch (error) {
+      return this.Handler.errorException(response, error);
+    }
+  }
 
-  // // Fetch a particular post using ID
-  // @Get('post/:postID')
-  // async getPost(@Res() res, @Param('postID', new ValidateObjectId()) postID) {
-  //   const post = await this.userService.getPost(postID);
-  //   if (!post) throw new NotFoundException('Post does not exist!');
-  //   return res.status(HttpStatus.OK).json(post);
-
-  // }
-
-  // // Edit a particular post using ID
-  // @Put('/edit')
-  // async editPost(
-  //   @Res() res,
-  //   @Query('postID', new ValidateObjectId()) postID,
-  //   @Body() createUserDTO: CreateUserDTO
-  // ) {
-  //   const editedPost = await this.userService.editPost(postID, createUserDTO);
-  //   if (!editedPost) throw new NotFoundException('Post does not exist!');
-  //   return res.status(HttpStatus.OK).json({
-  //     message: 'Post has been successfully updated',
-  //     post: editedPost
-  //   })
-  // }
 
   // // Delete a post using ID
   // @Delete('/delete')
